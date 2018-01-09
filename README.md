@@ -24,7 +24,22 @@ python model.py --validate
 ```
 
 ## Analysis
-Linera Regression may be simple but it takes a lot of care and feeding to be accurate. The ``prepare_data.py`` does some of those things.
+Linera Regression may be simple but it takes some care and feeding to be accurate. The ``prepare_data.py`` script does some of those things.
 
-### Data Sequence Randomization
-We do training in mini batches. For this to work we need to shuffle the data randomly. Otherwise by default the UCI data is cronologically ordered.
+### Feature Scaling
+Linera regression heavily depends on feature scaling of the data. Here we use standardization that make each feature value mean to be 0. The ``prepare_data.py`` script calculates the mean and standard deviation for the entire data set and saves it in ``params.pickle`` file. These values are later loaded during training and validation to normalize the feature data (``x`` matrix).
+
+Try commenting out the feature scaling code in the ``load_next_batch()`` method of ``MPGDataLoader``. Training will go horribly wrong.
+
+**Note:** Feature values need to be scaled both before training and prediction (which includes validation) stages.
+
+### Data Separation
+We need to separate the master data set into traing and validation sets. For this to work we need to shuffle the data randomly. Otherwise by default the UCI data is cronologically ordered. The ``prepare_data.py`` script randomly shuffles the master data and uses 90% of it for training and 10% for validation.
+
+### The Loss Function
+Here we use this loss function:
+
+Loss = ((Y_ - Y)<sup>2</sup>/m)
+
+Where ``Y_`` is the prediction vector, ``Y`` is the ground truth and ``m`` is the number of samples in a training batch.
+

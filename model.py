@@ -92,7 +92,8 @@ class MPGDataLoader(object):
             x[index, 4] = float(parts[5])
             #Model year starts with 1970
             x[index, 5] = float(parts[6]) - 70
-        
+            
+        #Apply feature scaling through standardization
         x = (x - self.mu) / self.sigma
 
         return (y, x)
