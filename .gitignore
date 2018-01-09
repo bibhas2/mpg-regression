@@ -1,0 +1,5 @@
+model.ckpt.*
+checkpoint
+validation.data
+training.data
+*.pickle

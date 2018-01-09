@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import sys
+import pickle
 
 def weight_variable(shape, name):
     initial = tf.truncated_normal(shape, stddev=0.001)
@@ -40,11 +41,25 @@ class LinearRegressionModel(object):
 
         return session.run(self.error_rate, feed_dict)
 
+    def save(self, session):
+        saver = tf.train.Saver()
+        saver.save(session, "./model.ckpt")
+
+    def restore(self, session):
+        saver = tf.train.Saver()
+        saver.restore(session, "./model.ckpt")
+
 class MPGDataLoader(object):
     def __init__(self, file_name):
         self.file_name = file_name
         self.data_file = None
         self.num_features = 6
+        self.mu = None
+        self.sigma = None
+
+        with open("./params.pickle", "rb") as params_file:
+            self.mu = pickle.load(params_file)
+            self.sigma = pickle.load(params_file)
 
     def __enter__(self):
         self.data_file = open(self.file_name, "r")
@@ -78,36 +93,45 @@ class MPGDataLoader(object):
             #Model year starts with 1970
             x[index, 5] = float(parts[6]) - 70
         
-        #Normalize the data
-        mu = np.mean(x,axis=0)
-        sigma = np.std(x,axis=0)
-
-        # print mu
-        # print sigma
-
-        x = (x - mu) / sigma
+        x = (x - self.mu) / self.sigma
 
         return (y, x)
 
 def train():
-    with MPGDataLoader("./auto-mpg.data") as loader:
+    with MPGDataLoader("./training.data") as loader:
         with tf.Session() as session:
             model = LinearRegressionModel(loader.num_features)
 
             init_op = tf.global_variables_initializer()
             session.run(init_op)
 
-            for step in range(0, 2000):
+            for step in range(0, 600):
                 y, x = loader.load_next_batch(150)
 
                 model.train_batch(session, x, y)
 
-                if step % 100:
+                if step % 100 == 0:
                     error_rate = model.run_validation(session, x, y)
-                    print "Error:", (error_rate*100.0), "%"
-                # print "y:", y
-                #print "W:", session.run(model.W)
-                # print "Y_:", session.run(model.Y_, {model.X: x, model.Y: y})
-                #print session.run(model.l2_loss, {model.X: x, model.Y: y})
+                    print "Step:", step, "Error:", (error_rate*100.0), "%"
 
-train()
+            model.save(session)
+
+def validate():
+    with MPGDataLoader("./validation.data") as loader:
+        with tf.Session() as session:
+            model = LinearRegressionModel(loader.num_features)
+
+            model.restore(session)
+
+            for step in range(0, 5):
+                y, x = loader.load_next_batch(50)
+
+                error_rate = model.run_validation(session, x, y)
+                print "Step:", step, "Error:", (error_rate*100.0), "%"
+
+if len(sys.argv) == 1:
+    print "Usage: [--train] [--validate]"
+elif sys.argv[1] == "--train":
+    train()
+elif sys.argv[1] == "--validate":
+    validate()
