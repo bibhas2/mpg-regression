@@ -41,5 +41,10 @@ Here we use this loss function:
 
 Loss = ((Y_ - Y)<sup>2</sup>/m)
 
-Where ``Y_`` is the prediction vector, ``Y`` is the ground truth and ``m`` is the number of samples in a training batch.
+Where ``Y_`` is the prediction vector, ``Y`` is the ground truth and ``m`` is the number of samples in a training batch. This worked fine.
+
+But for some reason using the ``tf.nn.l2_loss`` function worked very badly. This is essentially:
+
+Loss = ((Y_ - Y)<sup>2</sup>/2)
+
 
