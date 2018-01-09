@@ -18,11 +18,12 @@ class LinearRegressionModel(object):
     def build_graph(self):
         #We add an extra feature for bias. The feature value for
         #bias is always 1.
-        self.X = tf.placeholder(tf.float32, [None, self.num_features + 1])
+        self.X = tf.placeholder(tf.float32, [None, self.num_features])
         self.Y = tf.placeholder(tf.float32, [None, 1])
-        self.W = weight_variable([self.num_features + 1, 1], 'W')
+        self.b = weight_variable([1], "b")
+        self.W = weight_variable([self.num_features, 1], 'W')
 
-        self.Y_ = tf.matmul(self.X, self.W)
+        self.Y_ = tf.add(tf.matmul(self.X, self.W), self.b)
 
         self.l2_loss = tf.reduce_mean(tf.square(self.Y_ - self.Y)) #tf.nn.l2_loss(tf.subtract(self.Y, self.Y_))
         self.training_step = tf.train.GradientDescentOptimizer(0.01).minimize(self.l2_loss)
@@ -56,7 +57,7 @@ class MPGDataLoader(object):
 
     def load_next_batch(self, batch_size):
         #One extra feature for bias
-        x = np.zeros([batch_size, self.num_features + 1])
+        x = np.zeros([batch_size, self.num_features])
         y = np.zeros([batch_size, 1])
 
         for index in range(0, batch_size):
@@ -76,8 +77,16 @@ class MPGDataLoader(object):
             x[index, 4] = float(parts[5])
             #Model year starts with 1970
             x[index, 5] = float(parts[6]) - 70
-            x[index, 6] = 1.0 #Bias feature
         
+        #Normalize the data
+        mu = np.mean(x,axis=0)
+        sigma = np.std(x,axis=0)
+
+        # print mu
+        # print sigma
+
+        x = (x - mu) / sigma
+
         return (y, x)
 
 def train():
@@ -88,16 +97,17 @@ def train():
             init_op = tf.global_variables_initializer()
             session.run(init_op)
 
-            for step in range(0, 2):
-                y, x = loader.load_next_batch(1)
+            for step in range(0, 2000):
+                y, x = loader.load_next_batch(150)
 
                 model.train_batch(session, x, y)
-                #error_rate = model.run_validation(session, x, y)
 
-                # print "Error:", (error_rate*100.0), "%"
-                print "y:", y
-                print "W:", session.run(model.W)
-                print "Y_:", session.run(model.Y_, {model.X: x, model.Y: y})
+                if step % 100:
+                    error_rate = model.run_validation(session, x, y)
+                    print "Error:", (error_rate*100.0), "%"
+                # print "y:", y
+                #print "W:", session.run(model.W)
+                # print "Y_:", session.run(model.Y_, {model.X: x, model.Y: y})
                 #print session.run(model.l2_loss, {model.X: x, model.Y: y})
 
 train()
