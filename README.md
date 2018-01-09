@@ -27,7 +27,9 @@ python model.py --validate
 Linera Regression may be simple but it takes some care and feeding to be accurate. The ``prepare_data.py`` script does some of those things.
 
 ### Feature Scaling
-Linera regression heavily depends on feature scaling of the data. Here we use standardization that make each feature value mean to be 0. The ``prepare_data.py`` script calculates the mean and standard deviation for the entire data set and saves it in ``params.pickle`` file. These values are later loaded during training and validation to normalize the feature data (``x`` matrix).
+Linera regression heavily depends on feature scaling of the data. Here we use standardization that make each feature value mean to be 0 for the whole training dataset. The ``prepare_data.py`` script calculates the mean and standard deviation for the entire data set and saves it in ``params.pickle`` file. These values are later loaded during training and validation to normalize the feature data (``x`` matrix).
+
+**Note:** The the mean and standard deviation are vectors with each element corresponding to a feature.
 
 Try commenting out the feature scaling code in the ``load_next_batch()`` method of ``MPGDataLoader``. Training will go horribly wrong.
 
